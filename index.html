@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>মাটি বন্ধু - SRDI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kalpurush&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <header class="app-header no-print">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/8/84/Government_Seal_of_Bangladesh.svg" alt="Govt Logo" class="header-logo govt-logo">
+            <div class="header-text">
+                <h1>মৃত্তিকা সম্পদ উন্নয়ন ইনস্টিটিউট</h1>
+                <h2>কৃষি মন্ত্রণালয়</h2>
+                <p>গণপ্রজাতঞ্চলী বাংলাদেশ সরকার</p>
+            </div>
+            <img src="srdi_logo.jpg" alt="SRDI Logo" class="header-logo srdi-logo">
+        </header>
+
+        <main class="main-content">
+            <!-- Home View -->
+            <div id="home-view" class="view-section active">
+                <div class="mati-bondhu-container">
+                    <div class="logo-badge"><i class="fa-solid fa-hands-holding-circle mati-icon"></i></div>
+                    <h3 class="mati-bondhu-title">মাটি বন্ধু</h3>
+                    <p class="mati-bondhu-tagline">আপনার ডিজিটাল মৃত্তিকা সহায়ক</p>
+                </div>
+                <div class="button-grid">
+                    <div class="grid-box box-soil" onclick="switchView('soil-view')">
+                        <div class="box-icon"><i class="fa-solid fa-flask-vial"></i></div>
+                        <span class="box-title">মাটির গুণাগুণ</span>
+                    </div>
+                    <div class="grid-box box-fertilizer" onclick="switchView('fertilizer-view')">
+                        <div class="box-icon"><i class="fa-solid fa-seedling"></i></div>
+                        <span class="box-title">সার সুপারিশ</span>
+                    </div>
+                    <div class="grid-box box-weather" onclick="switchView('weather-view')">
+                        <div class="box-icon"><i class="fa-solid fa-cloud-sun-rain"></i></div>
+                        <span class="box-title">আবহাওয়া</span>
+                    </div>
+                    <div class="grid-box box-saved" onclick="switchView('saved-view')">
+                        <div class="box-icon"><i class="fa-solid fa-bookmark"></i></div>
+                        <span class="box-title">সংরক্ষিত তথ্য</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="soil-view" class="view-section">
+                <button class="back-btn" onclick="switchView('home-view')"><i class="fa-solid fa-arrow-left"></i> হোমে ফেরত</button>
+                <h3 class="section-title">মাটির গুণাগুণ বিশ্লেষণ (WebGIS)</h3>
+                
+                <div class="filter-form">
+                    <div class="form-group"><label>বিভাগ:</label><select id="soil-division" onchange="onDivisionChange('soil')"><option value="">সিলেক্ট করুন</option></select></div>
+                    <div class="form-group"><label>জেলা:</label><select id="soil-district" onchange="onDistrictChange('soil')"><option value="">সিলেক্ট করুন</option></select></div>
+                    <div class="form-group"><label>উপজেলা (THANAME):</label><select id="soil-upazila" onchange="onUpazilaChange('soil')"><option value="">সিলেক্ট করুন</option></select></div>
+                    <div class="form-group"><label>ইউনিয়ন (UNINAME):</label><select id="soil-union" onchange="onUnionChange('soil')"><option value="">সিলেক্ট করুন</option></select></div>
+                    <div class="form-group"><label>মৌজা (MAUZNAME):</label><select id="soil-mauza" onchange="renderSoilAnalysis()"><option value="">সিলেক্ট করুন</option></select></div>
+                    <div class="form-group">
+                        <label>পুষ্টি উপাদান:</label>
+                        <select id="soil-nutrient" onchange="renderSoilAnalysis()">
+                            <option value="pH">pH (পিএইচ)</option>
+                            <option value="OM">জৈব পদার্থ (OM)</option>
+                            <option value="Nitrogen">নাইট্রোজেন (N)</option>
+                            <option value="Phosphorus">ফসফরাস (P)</option>
+                            <option value="Potassium">পটাশিয়াম (K)</option>
+                            <option value="Sulphur">সালফার (S)</option>
+                            <option value="Zinc">জিংক (Zn)</option>
+                            <option value="Boron">বোরন (B)</option>
+                            <option value="Calcium">ক্যালসিয়াম (Ca)</option>
+                            <option value="Magnesium">ম্যাগনেসিয়াম (Mg)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="value-display-card" id="nutrient-val-card" style="background:#eef7ee; padding:12px; border-radius:8px; margin: 10px 0; text-align:center; font-weight:bold;">
+                    <p style="margin:0;">পুরাতন মান (Old Value): <span id="val-old-display" style="color:#d9534f;">--</span></p>
+                    <p style="margin:5px 0 0 0;">নতুন মান (New Value): <span id="val-new-display" style="color:#5cb85c;">--</span></p>
+                </div>
+
+                <button class="print-trigger-btn" onclick="generateSoilReportOnScreen()" style="width:100%; margin-bottom:15px;"><i class="fa-solid fa-file-contract"></i> মাটির পুষ্টি উপাদান ও গুণাগুণ মান রিপোর্ট দেখুন</button>
+
+                <div id="soil-report-card" class="report-display-box" style="display:none; background:#fff; border:1px solid #2e7d32; padding:15px; border-radius:8px; margin-bottom:15px;">
+                    <h3 style="text-align:center; color:#2e7d32; margin-top:0;">মাটির পুষ্টি উপাদান ও গুণাগুণ মান রিপোর্ট</h3>
+                    <p id="display-soil-location" style="text-align:center; font-weight:bold;"></p>
+                    <table class="report-table" style="width:100%; border-collapse:collapse; margin-top:10px;">
+                        <thead>
+                            <tr style="background:#2e7d32; color:#fff;">
+                                <th style="padding:8px; border:1px solid #ccc;">পুষ্টি উপাদান</th>
+                                <th style="padding:8px; border:1px solid #ccc;">ক্যাটাগরি মান (Status Label)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="display-soil-tbody"></tbody>
+                    </table>
+                </div>
+
+                <div class="chart-container" style="margin-bottom: 15px;">
+                    <canvas id="soilChart"></canvas>
+                </div>
+
+                <div class="map-mode-selector" style="text-align:center; margin-bottom:10px;">
+                    <label class="radio-label" style="margin-right:15px; font-weight:bold;">
+                        <input type="radio" name="mapMode" value="old" checked onchange="renderSoilAnalysis()"> Old Map
+                    </label>
+                    <label class="radio-label" style="font-weight:bold;">
+                        <input type="radio" name="mapMode" value="new" onchange="renderSoilAnalysis()"> New Map
+                    </label>
+                </div>
+
+                <div id="map-container" style="height: 380px; width: 100%; border-radius: 8px; border: 1px solid #ccc;"></div>
+            </div>
+
+            <div id="fertilizer-view" class="view-section">
+                <button class="back-btn" onclick="switchView('home-view')"><i class="fa-solid fa-arrow-left"></i> হোমে ফেরত</button>
+                <h3 class="section-title">সার সুপারিশ (FRG 2018)</h3>
+
+                <div class="filter-form">
+                    <div class="form-group"><label>বিভাগ:</label><select id="fert-division" onchange="onDivisionChange('fert')"><option value="">সিলেক্ট করুন</option></select></div>
+                    <div class="form-group"><label>জেলা:</label><select id="fert-district" onchange="onDistrictChange('fert')"><option value="">সিলেক্ট করুন</option></select></div>
+                    <div class="form-group"><label>উপজেলা:</label><select id="fert-upazila" onchange="onUpazilaChange('fert')"><option value="">সিলেক্ট করুন</option></select></div>
+                    <div class="form-group"><label>ইউনিয়ন:</label><select id="fert-union" onchange="onUnionChange('fert')"><option value="">সিলেক্ট করুন</option></select></div>
+                    <div class="form-group"><label>মৌজা:</label><select id="fert-mauza"><option value="">সিলেক্ট করুন</option></select></div>
+
+                    <div class="form-group">
+                        <label for="cropSeasonSelect">মৌসুম নির্বাচন করুন:</label>
+                        <select id="cropSeasonSelect" onchange="onSeasonOrCategoryChange()">
+                            <option value="">-- মৌসুম সিলেক্ট করুন --</option>
+                            <option value="Rabi">রবি</option>
+                            <option value="Kharif-1">খরিফ-১</option>
+                            <option value="Kharif-2">খরিফ-২</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cropCategorySelect">ফসলের ধরন নির্বাচন করুন:</label>
+                        <select id="cropCategorySelect" onchange="onSeasonOrCategoryChange()">
+                            <option value="">-- ক্যাটাগরি সিলেক্ট করুন --</option>
+                            <option value="grains">দানাজাতীয় ফসল</option>
+                            <option value="vegetables">শাকসবজি</option>
+                            <option value="fibers">আঁশজাতীয় ফসল</option>
+                            <option value="pulses">ডালজাতীয় ফসল</option>
+                            <option value="oils">তেলজাতীয় ফসল</option>
+                            <option value="fruits">ফলমূল</option>
+                            <option value="flowers">ফুল</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cropNameSelect">ফসল নির্বাচন করুন:</label>
+                        <select id="cropNameSelect">
+                            <option value="">-- ফসল সিলেক্ট করুন --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="print-trigger-btn" onclick="generateFertilizerReportOnScreen()" style="width:100%; margin-bottom:15px;"><i class="fa-solid fa-list-check"></i> সুনির্দিষ্ট সার সুপারিশ কার্ড দেখুন</button>
+
+                <div id="fert-report-card" class="report-display-box" style="display:none; background:#fff; border:1px solid #1b5e20; padding:15px; border-radius:8px; margin-top:15px;">
+                    <h3 style="text-align:center; color:#1b5e20; margin-top:0;">সুনির্দিষ্ট সার সুপারিশ কার্ড</h3>
+                    <p id="display-fert-location" style="text-align:center; font-weight:bold;"></p>
+                    <table class="report-table" style="width:100%; border-collapse:collapse; margin-top:10px;">
+                        <thead>
+                            <tr style="background:#1b5e20; color:#fff;">
+                                <th style="padding:8px; border:1px solid #ccc;">সারের নাম</th>
+                                <th style="padding:8px; border:1px solid #ccc;">সুপারিশকৃত পরিমাণ (গ্রাম/শতক)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="display-fert-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="weather-view" class="view-section">
+                <button class="back-btn" onclick="switchView('home-view')"><i class="fa-solid fa-arrow-left"></i> হোমে ফেরত</button>
+                <h3 class="section-title">আবহাওয়া ও পূর্বাভাস</h3>
+
+                <div class="filter-form">
+                    <div class="form-group"><label>বিভাগ:</label><select id="weather-division" onchange="onDivisionChange('weather')"><option value="">সিলেক্ট করুন</option></select></div>
+                    <div class="form-group"><label>জেলা:</label><select id="weather-district" onchange="onDistrictChange('weather')"><option value="">সিলেক্ট করুন</option></select></div>
+                    <div class="form-group"><label>উপজেলা:</label><select id="weather-upazila" onchange="fetchLocationWeather()"><option value="">সিলেক্ট করুন</option></select></div>
+                </div>
+
+                <div class="weather-card">
+                    <div class="weather-header">
+                        <i class="fa-solid fa-cloud-sun weather-main-icon"></i>
+                        <div>
+                            <h2 id="w-temp">--°C</h2>
+                            <p id="w-cond">অবস্থা লোড হচ্ছে...</p>
+                        </div>
+                    </div>
+                    <div class="weather-details-grid">
+                        <div class="w-item"><i class="fa-solid fa-cloud-rain"></i> <span>বৃষ্টিপাতের সম্ভাবনা:</span> <strong id="w-rain">-- %</strong></div>
+                        <div class="w-item"><i class="fa-solid fa-sun"></i> <span>সূর্যালোক (Sunshine):</span> <strong id="w-sun">-- hrs</strong></div>
+                        <div class="w-item"><i class="fa-solid fa-wind"></i> <span>বায়ু প্রবাহ:</span> <strong id="w-wind">-- km/h</strong></div>
+                        <div class="w-item"><i class="fa-solid fa-compass"></i> <span>বায়ুর দিক:</span> <strong id="w-dir">--</strong></div>
+                    </div>
+                    
+                    <div class="weather-forecast">
+                        <h4>আগামী ৩ দিনের বিস্তারিত পূর্বাভাস</h4>
+                        <div class="forecast-list" id="forecast-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="saved-view" class="view-section">
+                <button class="back-btn" onclick="switchView('home-view')"><i class="fa-solid fa-arrow-left"></i> হোমে ফেরত</button>
+                <h3 class="section-title">সংরক্ষিত তথ্য</h3>
+                <p>সংরক্ষিত রিপোর্টসমূহ এখানে দেখা যাবে।</p>
+            </div>
+
+            <div id="others-view" class="view-section">
+                <button class="back-btn" onclick="switchView('home-view')"><i class="fa-solid fa-arrow-left"></i> হোমে ফেরত</button>
+                <h3 class="section-title"><i class="fa-solid fa-cubes"></i> অন্যান্য সেবা ও তথ্য</h3>
+                
+                <div class="button-grid">
+                    <div class="grid-box box-tech" onclick="showInlineNotice('SRDI এর প্রযুক্তি সংক্রান্ত তথ্য শীঘ্রই যুক্ত হবে...')">
+                        <div class="box-icon"><i class="fa-solid fa-laptop-code"></i></div>
+                        <span class="box-title">SRDI এর প্রযুক্তি</span>
+                    </div>
+                    <div class="grid-box box-service" onclick="showInlineNotice('SRDI এর সেবা সংক্রান্ত তথ্য শীঘ্রই যুক্ত হবে...')">
+                        <div class="box-icon"><i class="fa-solid fa-handshake-angle"></i></div>
+                        <span class="box-title">SRDI এর সেবা</span>
+                    </div>
+                    <div class="grid-box box-documentary" onclick="showInlineNotice('SRDI এর তথ্যচিত্র সংক্রান্ত ভিডিও ও তথ্য শীঘ্রই যুক্ত হবে...')">
+                        <div class="box-icon"><i class="fa-solid fa-photo-film"></i></div>
+                        <span class="box-title">SRDI এর তথ্যচিত্র</span>
+                    </div>
+                    <div class="grid-box box-call" onclick="showInlineNotice('কল সেন্টার সেবা খুব শীঘ্রই চালু হতে যাচ্ছে...')">
+                        <div class="box-icon"><i class="fa-solid fa-headset"></i></div>
+                        <span class="box-title">কল সেন্টার</span>
+                    </div>
+                    <div class="grid-box box-feedback" style="grid-column: span 2;" onclick="showInlineNotice('আপনার মতামত ও পরামর্শ নেওয়ার ফর্মটি শীঘ্রই যুক্ত হবে...')">
+                        <div class="box-icon"><i class="fa-solid fa-comment-dots"></i></div>
+                        <span class="box-title">আপনার পরামর্শ</span>
+                    </div>
+                </div>
+
+                <div id="inline-notice-box" class="notice-box" style="display: none;">
+                    <p id="inline-notice-text"></p>
+                </div>
+            </div>
+
+            <div id="about-view" class="view-section">
+                <button class="back-btn" onclick="switchView('home-view')"><i class="fa-solid fa-arrow-left"></i> হোমে ফেরত</button>
+                <h3 class="section-title"><i class="fa-solid fa-circle-info"></i> অ্যাপ ও ইনস্টিটিউট সম্পর্কে</h3>
+                
+                <div class="about-card">
+                    <h4>মৃত্তিকা সম্পদ উন্নয়ন ইনস্টিটিউট সম্পর্কে:</h4>
+                    <p>মৃত্তিকা সম্পদ উন্নয়ন ইনস্টিটিউট (SRDI) গণপ্রজাতন্ত্রী বাংলাদেশ সরকারের কৃষি মন্ত্রণালয়ের অধীন একটি বিশেষায়িত প্রতিষ্ঠান। দেশের মাটি ও ভূমি সম্পদের জরিপ, মাটি শ্রেণিবিন্যাস, মাটির উর্বরতা ও পুষ্টি উপাদান মূল্যায়ন, ভূমি ব্যবহার পরিকল্পনা এবং মাটি ও ভূমি সম্পদের টেকসই ব্যবস্থাপনায় প্রয়োজনীয় তথ্য ও প্রযুক্তি উন্নয়নে SRDI কাজ করে।</p>
+                    <p>দেশের বিভিন্ন অঞ্চলের মাটির বৈশিষ্ট্য ও উর্বরতা সম্পর্কিত তথ্য সংগ্রহ, বিশ্লেষণ ও সংরক্ষণের পাশাপাশি কৃষি উৎপাদনে মাটির সঠিক ব্যবহার ও সার ব্যবস্থাপনায় সহায়তা প্রদান SRDI-এর অন্যতম গুরুত্বপূর্ণ কার্যক্রম।</p>
+                    
+                    <hr class="about-divider">
+                    
+                    <h4>মাটি বন্ধু অ্যাপ সম্পর্কে:</h4>
+                    <p>মাটি বন্ধু অ্যাপের মাধ্যমে মাটি ও পুষ্টি সম্পর্কিত তথ্য এবং কৃষি উপযোগী পরামর্শকে সহজ ও ব্যবহারবান্ধবভাবে কৃষকের কাছে পৌঁছে দেওয়ার উদ্যোগ নেওয়া হয়েছে।</p>
+                    
+                    <div class="credits-box">
+                        <p><strong>পরিকল্পনাকারী:</strong> ডঃ আফসার আলী, মহাপরিচালক, মৃত্তিকা সম্পদ উন্নয়ন ইনস্টিটিউট।</p>
+                        <p style="margin-top:6px;"><strong>অ্যাপ নির্মাতা:</strong> রাহাতুল ইসলাম, বৈজ্ঞানিক কর্মকর্তা, মৃত্তিকা সম্পদ উন্নয়ন ইনস্টিটিউট।</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <nav class="bottom-nav no-print">
+            <a href="javascript:void(0)" class="nav-item active" onclick="switchView('home-view')">
+                <i class="fa-solid fa-house"></i>
+                <span>হোম</span>
+            </a>
+            <a href="javascript:void(0)" class="nav-item" onclick="switchView('others-view')">
+                <i class="fa-solid fa-cubes"></i>
+                <span>অন্যান্য</span>
+            </a>
+            <a href="javascript:void(0)" class="nav-item" onclick="switchView('about-view')">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>সম্পর্কে</span>
+            </a>
+        </nav>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
